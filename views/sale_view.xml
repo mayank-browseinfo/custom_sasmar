@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record id="view_sale_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale_stock.view_order_form_inherit"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="company_id" position="replace">
+                        <field name="company_id" readonly="False"/>
+                    </field>
+                    <field name="pricelist_id" position="replace">
+                        <field domain="[('type','=','sale'),'|',('company_id', '=', company_id),('company_id', '=', False)]" name="pricelist_id" groups="product.group_sale_pricelist" on_change="onchange_pricelist_id(pricelist_id,order_line)"/>
+                    </field>
+                     <field name="fiscal_position" position="replace">
+                        <field name="fiscal_position" options="{'no_create': True}" on_change="onchange_fiscal_position(fiscal_position, order_line, context)" domain="['|',('company_id', '=', company_id),('company_id', '=', False)]"/>
+                    </field>
+                </data>
+           </field>
+        </record>
+
+        <record id="view_sale_line_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.line.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+              <xpath expr="//field[@name='order_line']/form/group/group/field[@name='tax_id']" position="replace">
+                  <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase'),('company_id', '=', parent.company_id)]"/>
+              </xpath>
+              <xpath expr="/form/sheet/notebook/page/group/group/field[@name='company_id']" position="replace">
+                  <field name="company_id" widget="selection" groups="base.group_multi_company"
+                  on_change="onchange_company_id(company_id)"/>
+              </xpath>
+           </field>
+        </record>
+    </data>
+</openerp>
