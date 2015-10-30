@@ -39,24 +39,29 @@ class account_invoice_line(osv.osv):
         
         fiscal_pool = self.pool.get('account.fiscal.position')
         fpos = inv.fiscal_position or False
-        dacc = False
-        cacc = False
         company_currency = inv.company_id.currency_id.id
         print '\n custom valuation _anglo_saxon_sale_move_lines of acc anglo saxon',i_line.product_id.valuation,res,context,i_line,i_line.company_id
         if i_line.product_id.type != 'service' and i_line.product_id.valuation == 'real_time':
             # debit account dacc will be the output account
             # first check the product, if empty check the category
-
+            
+### TO FIND STOCK OUTPUT ACCOUNT FOR REQUIRED COMPANY
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Stock Output Account'), ('name', '=', 'property_stock_account_output')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', i_line.company_id.id)])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 dacc = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
+            else:
+                dacc = False
             if not dacc:
                 field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Stock Output Account'), ('name', '=', 'property_stock_account_output_categ')])
                 if field_id:
                     property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', i_line.company_id.id)])
+                else:
+                    property_id = False
                 if property_id:
                     acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                     dacc = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -64,16 +69,23 @@ class account_invoice_line(osv.osv):
             # in both cases the credit account cacc will be the expense account
             # first check the product, if empty check the category
             
+## TO FIND EXPENSE ACCOUNT            
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Expense Account'), ('name', '=', 'property_account_expense')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', i_line.company_id.id)])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 cacc = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
+            else:
+                cacc = False
             if not cacc:
                 field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Expense Account'), ('name', '=', 'property_account_expense_categ')])
                 if field_id:
                     property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', i_line.company_id.id)])
+                else:
+                    property_id = False
                 if property_id:
                     acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                     cacc = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -117,8 +129,9 @@ class stock_quant(osv.osv):
     def _create_account_move_line(self, cr, uid, quants, move, credit_account_id, debit_account_id, journal_id, context=None):
         print '\n custom _create_account_move_line of stock acc',move,credit_account_id,debit_account_id,context
         #group quants by cost
-#### UPDATE CONTEXT        
+#### UPDATE CONTEXT TO GET DEFAULT ACC. PERIOD IN FIND METHOD
         context.update({'company_id': context.get('force_company')})
+###        
         quant_cost_qty = {}
         for quant in quants:
             if quant_cost_qty.get(quant.cost):
@@ -141,6 +154,7 @@ class account_move(osv.osv):
     _inherit = "account.move"
     
     def create(self, cr, uid, vals, context=None):
+### TO UPDATE VALS WHEN CREATING MOVE FROM PURCHASE ORDER        
         if context.get('Purchase_key') == 'Purchase_key':
             vals.update({'company_id': context.get('force_company')})
         return super(account_move, self).create(cr, uid, vals, context=context)

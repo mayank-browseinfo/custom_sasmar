@@ -113,7 +113,6 @@ class sale_order(osv.osv):
         Property_obj = self.pool.get('ir.property')
         Field_obj = self.pool.get('ir.model.fields')
         Account_obj = self.pool.get('account.account')
-        account_id = False
         
         journal_ids = self.pool.get('account.journal').search(cr, uid,
             [('type', '=', 'sale'), ('company_id', '=', order.company_id.id)],
@@ -125,6 +124,8 @@ class sale_order(osv.osv):
         field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Account Receivable')])
         if field_id:
             property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', order.company_id.id)])
+        else:
+            property_id = False
         if property_id:
             acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
             account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -169,7 +170,7 @@ class sale_order_line(osv.osv):
         Property_obj = self.pool.get('ir.property')
         Field_obj = self.pool.get('ir.model.fields')
         Account_obj = self.pool.get('account.account')
-        account_id = False
+        
         if not line.invoiced:
             if not account_id:
                 if line.product_id:
@@ -177,19 +178,27 @@ class sale_order_line(osv.osv):
                     field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Income Account'), ('name', '=', 'property_account_income')])
                     if field_id:
                         property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('sale_id').company_id.id)])
+                    else:
+                        property_id = False
                     if property_id:
                         acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                         account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
                         account_id = int(account_id)
+                    else:
+                        account_id = False
                         
                     if not account_id:
                         field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Income Account'), ('name', '=', 'property_account_income_categ')])
                         if field_id:
                             property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('sale_id').company_id.id)])
+                        else:
+                            property_id = False
                         if property_id:
                             acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                             account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
                             account_id = int(account_id)
+                        else:
+                            account_id = False
                     if not account_id:
                         raise osv.except_osv(_('Error!'),
                                 _('Please define income account for this product: "%s" (id:%d).') % \
@@ -237,21 +246,27 @@ class stock_move(osv.osv):
         Property_obj = self.pool.get('ir.property')
         Field_obj = self.pool.get('ir.model.fields')
         Account_obj = self.pool.get('account.account')
-        account_id = False
+        
         # Get account_id
         if inv_type in ('out_invoice', 'out_refund'):
             
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Income Account'), ('name', '=', 'property_account_income')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('company_id'))])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
                 account_id = int(account_id)
+            else:
+                account_id = False
             if not account_id:
                 field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Income Account'), ('name', '=', 'property_account_income_categ')])
                 if field_id:
                     property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('company_id'))])
+                else:
+                    property_id = False
                 if property_id:
                     acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                     account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -262,15 +277,21 @@ class stock_move(osv.osv):
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Expense Account'), ('name', '=', 'property_account_expense')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('company_id'))])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
                 account_id = int(account_id)
+            else:
+                account_id = False
                 
             if not account_id:
                 field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Expense Account'), ('name', '=', 'property_account_expense_categ')])
                 if field_id:
                     property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', context.get('company_id'))])
+                else:
+                    property_id = False
                 if property_id:
                     acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                     account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -334,7 +355,6 @@ class stock_picking(osv.osv):
         Property_obj = self.pool.get('ir.property')
         Field_obj = self.pool.get('ir.model.fields')
         Account_obj = self.pool.get('account.account')
-        account_id = False
         
         if context is None:
             context = {}
@@ -343,6 +363,8 @@ class stock_picking(osv.osv):
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Account Receivable'), ('name', '=', 'property_account_receivable')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', company_id)])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]
@@ -353,6 +375,8 @@ class stock_picking(osv.osv):
             field_id = Field_obj.search(cr, uid, [('field_description', '=', 'Account Payable'), ('name', '=', 'property_account_payable')])
             if field_id:
                 property_id = Property_obj.search(cr, uid, [('fields_id', '=', field_id[0]), ('company_id', '=', company_id)])
+            else:
+                property_id = False
             if property_id:
                 acc_ref = Property_obj.browse(cr, uid, property_id[0]).value_reference
                 account_id = acc_ref and acc_ref.split(',') and acc_ref.split(',')[1]

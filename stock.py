@@ -58,6 +58,7 @@ class stock_transfer_details(models.TransientModel):
             packop.unlink()
 
         # Execute the transfer of the picking
+        
 ## UPDATE CONTEXT FOR PURCHASE ORDER PRODUCT MOVE        
         self.picking_id.with_context(Purchase_key='Purchase_key').do_transfer()
 
